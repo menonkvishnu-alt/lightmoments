@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Moment of Light</title>
+<meta name="description" content="Release a heavy thought. Receive the truths that answer it." />
+<meta name="theme-color" content="#050816" />
+<!-- Open Graph for nice link previews when shared -->
+<meta property="og:title" content="Moment of Light" />
+<meta property="og:description" content="Release a heavy thought. Receive the truths that answer it." />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet" />
+<!-- Umami analytics (privacy-friendly, no cookies, no personal data) -->
+<script defer src="https://cloud.umami.is/script.js" data-website-id="f2131479-4704-40f7-98b5-5c18b4a93f79"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; width: 100%; overflow: hidden; background: #000; }
+  body {
+    font-family: 'Cormorant Garamond', serif;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #cosmos {
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 50% 40%, #0d1030 0%, #050816 70%);
+    overflow: hidden;
+  }
+  .star { position: absolute; background: white; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; }
+  @keyframes twinkle { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.9; } }
+  @keyframes shrinkFade { 0% { transform: scale(1); opacity: 1; filter: blur(0); } 60% { transform: scale(0.3); opacity: 0.5; filter: blur(2px); } 100% { transform: scale(0.02); opacity: 0; filter: blur(4px); } }
+  @keyframes dissolve { 0% { opacity: 1; transform: scale(1); filter: blur(0); letter-spacing: 0; } 100% { opacity: 0; transform: scale(1.4); filter: blur(8px); letter-spacing: 6px; } }
+  @keyframes ripple { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.8; } 100% { transform: translate(-50%, -50%) scale(3.5); opacity: 0; } }
+  @keyframes emerge { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
+
+  .header-label {
+    position: absolute; top: env(safe-area-inset-top, 20px); padding-top: 20px;
+    left: 0; right: 0; text-align: center; z-index: 6; pointer-events: none;
+    color: rgba(255,255,255,0.45); font-size: 12px; letter-spacing: 5px; text-transform: uppercase;
+  }
+  .phase { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; z-index: 5; }
+  .cosmic-input::placeholder { color: rgba(255,255,255,0.22); font-style: italic; }
+  input.cosmic-input {
+    width: 100%; max-width: 340px; background: transparent; border: none;
+    border-bottom: 0.5px solid rgba(255,255,255,0.22); color: white;
+    padding: 10px 0; font-family: 'Cormorant Garamond', serif; font-size: 26px;
+    text-align: center; outline: none;
+  }
+  .cosmic-btn {
+    background: transparent; color: rgba(255,255,255,0.7);
+    border: 0.5px solid rgba(255,255,255,0.28); padding: 11px 30px;
+    border-radius: 999px; font-family: 'Cormorant Garamond', serif;
+    font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .cosmic-btn:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.45); }
+  .cosmic-btn:active { transform: scale(0.97); }
+  .meteor-thought {
+    position: absolute; cursor: pointer; touch-action: manipulation; text-align: center;
+    font-family: 'Cormorant Garamond', serif; color: white; white-space: nowrap;
+    will-change: transform, opacity; font-weight: 300;
+  }
+  .meteor-trail {
+    position: absolute; height: 1px;
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(180,200,255,0.5) 100%);
+    pointer-events: none; transform-origin: right center;
+  }
+</style>
+</head>
+<body>
+<div id="cosmos">
+  <div id="stars"></div>
+  <div class="header-label">moment of light</div>
+
+  <!-- INPUT -->
+  <div id="phase-input" class="phase">
+    <div style="color: rgba(255,255,255,0.4); font-size: 12px; text-align: center; margin-bottom: 28px; letter-spacing: 3px; text-transform: uppercase;">speak what's heavy</div>
+    <input id="thought-input" class="cosmic-input" type="text" maxlength="50" placeholder="I am not..." autocomplete="off" autocapitalize="off" autocorrect="off" />
+    <button id="release-btn" class="cosmic-btn" style="margin-top: 38px;">release</button>
+    <div style="position: absolute; bottom: 90px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.25); font-size: 12px; font-style: italic; padding: 0 30px; line-height: 1.6;">try "I am stupid" or "I'm afraid of failing"</div>
+  </div>
+
+  <!-- THOUGHT MINIMIZE -->
+  <div id="phase-thought" class="phase" style="display:none;">
+    <div id="thought-text" style="font-size: 34px; color: white; text-align: center; font-weight: 300;"></div>
+  </div>
+
+  <!-- FIELD -->
+  <div id="field" style="position:absolute; inset:0; display:none; z-index:4;"></div>
+
+  <!-- HINT -->
+  <div id="catch-hint" style="position:absolute; top:90px; left:0; right:0; text-align:center; z-index:6; pointer-events:none; opacity:0; transition:opacity 1s;">
+    <div style="color: rgba(255,255,255,0.4); font-size: 14px; font-style: italic;">tap each light as it nears you</div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div id="bottom-bar" style="position:absolute; bottom:0; left:0; right:0; padding:18px 26px calc(26px + env(safe-area-inset-bottom, 0px)); z-index:7; display:none; align-items:center; justify-content:space-between; background:linear-gradient(180deg, rgba(5,8,22,0) 0%, rgba(5,8,22,0.85) 60%);">
+    <div style="color: rgba(255,255,255,0.4); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;"><span id="caught-count">0</span> caught</div>
+    <button id="done-btn" class="cosmic-btn" style="padding:8px 22px; font-size:12px;">i'm done</button>
+  </div>
+
+  <!-- CLOSE -->
+  <div id="phase-close" class="phase" style="display:none; text-align:center;"></div>
+</div>
+
+<script>
+(function() {
+  const cosmos = document.getElementById('cosmos');
+  const stars = document.getElementById('stars');
+  const input = document.getElementById('thought-input');
+  const releaseBtn = document.getElementById('release-btn');
+  const phaseInput = document.getElementById('phase-input');
+  const phaseThought = document.getElementById('phase-thought');
+  const phaseClose = document.getElementById('phase-close');
+  const thoughtText = document.getElementById('thought-text');
+  const field = document.getElementById('field');
+  const bottomBar = document.getElementById('bottom-bar');
+  const catchHint = document.getElementById('catch-hint');
+  const caughtCountEl = document.getElementById('caught-count');
+
+  let W = window.innerWidth, H = window.innerHeight;
+  let CX = W / 2, CY = H / 2 - 10;
+  window.addEventListener('resize', () => {
+    W = window.innerWidth; H = window.innerHeight; CX = W / 2; CY = H / 2 - 10;
+  });
+
+  let caught = 0, running = false, spawnTimer = null, rafId = null;
+  let activeMeteors = [];
+  let sessionCount = 0; // how many thoughts released this visit
+
+  // Safe analytics helper. Never throws if Umami is blocked or not loaded.
+  // IMPORTANT: we never send the user's actual typed text — only the
+  // category it routed to. Their words stay private to their device.
+  function track(event, data) {
+    try {
+      if (window.umami && typeof window.umami.track === 'function') {
+        data ? window.umami.track(event, data) : window.umami.track(event);
+      }
+    } catch (e) { /* analytics must never break the app */ }
+  }
+
+  // starfield
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 1.8 + 0.4;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    s.style.animationDelay = Math.random() * 3 + 's';
+    stars.appendChild(s);
+  }
+
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const negativeWords = ['stupid','dumb','ugly','fat','worthless','broken','lazy','weak','hopeless','useless','pathetic','awful','terrible','unlovable','unwanted','alone','lost','failing','a failure','a loser','a mess','a fraud','nothing','boring','annoying','disgusting','damaged','unworthy','not enough','a burden','invisible','replaceable','cursed','worse','behind','crazy','insane','a coward','weak-minded','undeserving'];
+  const fearWords = ['fearful','scared','afraid','terrified','anxious','nervous','panicked','frightened','timid','cowardly','dread'];
+
+  // ---- THE CREED ----
+  // Core lines in your voice. These can surface in any pool, so the whole
+  // app carries one consistent spirit no matter what the user types.
+  // Set GENDER to 'king', 'queen', or 'sovereign' (neutral). Easy to wire
+  // to a one-tap choice at onboarding later.
+  const GENDER = 'sovereign';
+  const royaltyLine = GENDER === 'king' ? `a king never bows his head`
+                    : GENDER === 'queen' ? `a queen never bows her head`
+                    : `royalty does not kneel`;
+
+  const creed = [
+    `a god would never kneel`,
+    royaltyLine,
+    `a god cannot be derailed`,
+    `the god within me knows I am up to the challenge`,
+    `I will not fear`,
+    `I shall be fearless`,
+    `there is nothing on this earth for me to fear`,
+    `adversity makes me stronger`,
+    `I have faced tougher things before`,
+    `I've never lost — I've only learned`,
+    `failure isn't possible, because I will not quit`,
+    `these times will prove the greatness of my character`,
+    `smile, for this adversity is chiseling the statue`,
+    `smile in the face of challenge`,
+    `I am the greatest`,
+    `I am patient`,
+    `I am strategy-driven`,
+    `I am loving`,
+    `I was forged for moments like this`,
+    `the trial reveals the sovereign`,
+    `I rise every time I am tested`,
+    `I am dangerous to my own doubt`,
+    `let it come — I am ready`,
+    `I walk toward the fire`
+  ];
+
+  // Mix: take all category lines, then sprinkle in some creed lines so the
+  // user's voice is always present without drowning the specific response.
+  const withCreed = (lines, n = 6) => {
+    const shuffled = [...creed].sort(() => Math.random() - 0.5).slice(0, n);
+    return [...lines, ...shuffled];
+  };
+
+  const pools = {
+    // "I am not X" -> X is almost always an adjective (strong, smart, worthy,
+    // enough). Use templates that stay grammatical for ANY word, and only
+    // use the user's word in a few lines — let the creed carry the rest so it
+    // doesn't feel like one word conjugated ten ways.
+    notPositive: (q) => withCreed([
+      `I am ${q}`, `I am deeply ${q}`, `I was always ${q}`,
+      `I choose to be ${q}`, `I am becoming ${q}`, `being ${q} is my nature`,
+      `the part of me that longs to be ${q} already is`
+    ], 8),
+    negativeIdentity: () => withCreed([
+      `I define who I am`, `my thoughts are not me`, `I am not what I fear`,
+      `I am learning, not failing`, `I am intelligent and capable`, `I am whole`,
+      `I am wiser than this thought`, `I am the one who watches`, `I am allowed to be new`,
+      `I am enough as I am`, `I am royalty in my own life`, `I am sovereign over my mind`,
+      `I am built to endure`, `I am the author of who I become`, `I command my own attention`,
+      `I am relentless`, `I am disciplined beyond excuse`, `I am more than this moment`,
+      `I am being carved into something greater`
+    ]),
+    cant: (act) => withCreed([
+      `I can ${act}`, `I am faced with this because I CAN face it`, `I haven't yet — that's all`,
+      `I am capable of far more than this`, `I am made for hard things`, `I am stronger than I know`,
+      `I move toward it`, `I begin anyway`, `I am limitless`, `this is within my power`,
+      `I have everything I need within me`, `I do not lose — I gather lessons`,
+      `the only way I lose is if I stop`, `I learn, I adjust, I return`, `setbacks are setups`,
+      `every fall taught me how to stand`
+    ]),
+    fear: () => withCreed([
+      `I move toward what scares me`, `fear is a liar I no longer believe`, `I am bigger than this`,
+      `courage is my native tongue`, `I am the calm beneath the storm`, `I do not flinch`,
+      `I have already survived worse`, `what scares them does not scare me`, `I walk through`,
+      `fear has never once stopped me`, `I move where others freeze`, `I am ready for whatever comes`,
+      `I have faced worse and still I rose`, `the fear is just energy moving through me`,
+      `I am the witness, not the witnessed`, `I am brave by choice`
+    ]),
+    tooMuch: (q) => withCreed([
+      `I am exactly enough`, `I will not shrink`, `I am the right size for my life`,
+      `I am whole as I am`, `I take up my space`, `I am unapologetic`, `I am not "too" anything`,
+      `I will not dim my light`, `the right rooms will hold all of me`, `I am sovereign as I am`
+    ]),
+    adversity: () => withCreed([
+      `adversity makes me stronger`, `this is the forge, and I am the blade`,
+      `smile, for this adversity is chiseling the statue`, `the pressure is making me a diamond`,
+      `every hardship sharpens me`, `I thank the struggle for making me`,
+      `the weight is building the muscle`, `I grow teeth in the dark`,
+      `this storm is rinsing me clean`, `these times will prove the greatness of my character`,
+      `the trial reveals the sovereign`, `I rise each time I am tested`,
+      `I am being carved into something greater`, `I have faced tougher things before`
+    ], 4),
+    generic: () => withCreed([
+      `this is just a thought`, `I am not my thoughts`, `I am the calm and the storm`,
+      `I am whole`, `I am here now`, `I am at peace`, `I am becoming`, `I am the witness`,
+      `I return to the present`, `I am`, `I am the god within`, `I am sovereign over my mind`,
+      `I am becoming who I was meant to be`
+    ]),
+    // For "I hate myself" / "I'm not lovable" — softer, warmer, turns self-attack
+    // into self-compassion before rising into strength.
+    selfCompassion: () => withCreed([
+      `I am learning to be kind to myself`, `I speak to myself as I would a friend`,
+      `the part of me that hurts still deserves love`, `I am worthy of my own forgiveness`,
+      `I am allowed to be gentle with myself`, `I am doing better than I tell myself`,
+      `I have survived every hard day so far`, `I am not the voice that hates me`,
+      `I am worth showing up for`, `I can hold myself with compassion`,
+      `even now, I am worthy of love`, `I am more than my harshest thought about me`,
+      `I forgive myself for not being perfect`, `I am on my own side`
+    ], 4)
+  };
+
+  // Inputs this dark shouldn't get a tapping game — they get a gentle pause.
+  const crisisPhrases = ['kill myself','end it all','want to die','suicidal','suicide','better off dead',
+    'don\'t want to be here','don\'t want to live','no reason to live','can\'t go on','end my life',
+    'hurt myself','harm myself','hate living'];
+
+  function getPool(thought) {
+    const lower = thought.toLowerCase().trim();
+    const notMatch = lower.match(/(?:i'?m|i am) not (.+)/);
+    const cantMatch = lower.match(/i can'?t (.+)/);
+    const fearMatch = lower.match(/(?:i'?m afraid of|i fear) (.+)/);
+    const tooMatch = lower.match(/(?:i'?m|i am) too (.+)/);
+    const amMatch = lower.match(/^(?:i'?m|i am) (.+)/);
+
+    // self-directed hatred -> compassion, not warrior bravado
+    const selfHate = /\b(i hate myself|i hate me|hate who i am|disgusted with myself|i'?m so stupid|i'?m a piece of|i can'?t stand myself|loathe myself|i'?m disgusting)\b/.test(lower)
+      || /(hate|despise|loathe).{0,6}(myself|who i am)/.test(lower);
+    if (selfHate) return { lines: pools.selfCompassion(), cat: 'self_compassion' };
+
+    // named fear as an identity ("I am fearful / anxious / scared")
+    if (amMatch && fearWords.some(w => amMatch[1].includes(w))) return { lines: pools.fear(), cat: 'fear' };
+
+    if (notMatch) {
+      const q = notMatch[1].replace(/[.!?]$/, '');
+      // "I am not dumb/stupid/worthless" — the word AFTER "not" is itself negative.
+      // Echoing it ("I am dumb") would affirm the bad thing. Route to the
+      // identity pool instead, which answers with strength, not the bad word.
+      if (negativeWords.some(w => q.includes(w)) || fearWords.some(w => q.includes(w))) {
+        return { lines: pools.negativeIdentity(), cat: 'negative_identity' };
+      }
+      return { lines: pools.notPositive(q), cat: 'not_positive' };
+    }
+    if (cantMatch) return { lines: pools.cant(cantMatch[1].replace(/[.!?]$/, '')), cat: 'cant' };
+    if (fearMatch) return { lines: pools.fear(), cat: 'fear' };
+    if (tooMatch) return { lines: pools.tooMuch(tooMatch[1].replace(/[.!?]$/, '')), cat: 'too_much' };
+    if (amMatch && negativeWords.some(w => amMatch[1].includes(w))) return { lines: pools.negativeIdentity(), cat: 'negative_identity' };
+    // adversity / struggle / overwhelm -> the forge pool
+    const adversityWords = ['overwhelm','too much','can\'t take','exhausted','giving up','give up','breaking','broken down','struggling','struggle','tired of','burnt out','burned out','hard','suffering','pain','drowning','falling apart','at my limit','quit','defeated'];
+    if (adversityWords.some(w => lower.includes(w))) return { lines: pools.adversity(), cat: 'adversity' };
+    return { lines: pools.generic(), cat: 'generic' };
+  }
+
+  // ====== AI CONFIG ======
+  // Leave blank ('') to run on the built-in pools only (no backend needed).
+  // Set to your deployed endpoint, e.g. 'https://your-app.vercel.app/api/affirmations'
+  // to get AI-generated, catered responses. Falls back to pools automatically
+  // if the endpoint is slow, blocked, or errors — so the app NEVER breaks.
+  // Same-origin relative path: works no matter what Vercel names your project,
+  // because the app and the /api backend live on the SAME deployment.
+  // You never need to edit this, even if the project URL changes.
+  const AI_ENDPOINT = '/api/affirmations';
+
+  let activePool = [], poolQueue = [];
+  function nextPhrase() {
+    if (poolQueue.length === 0) poolQueue = [...activePool].sort(() => Math.random() - 0.5);
+    return poolQueue.pop();
+  }
+
+  // Try to fetch AI affirmations. Resolves to an array, or null on any failure.
+  // We give it a hard timeout so a slow network never delays the experience.
+  async function fetchAI(thought) {
+    if (!AI_ENDPOINT) return null;
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 3500); // never wait > 3.5s
+      const res = await fetch(AI_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ thought }),
+        signal: ctrl.signal
+      });
+      clearTimeout(timer);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (Array.isArray(data.affirmations) && data.affirmations.length >= 3) {
+        return data.affirmations;
+      }
+      return null;
+    } catch (e) {
+      return null; // timeout, offline, blocked — silently fall back
+    }
+  }
+
+  function release() {
+    const text = (input.value.trim() || 'I am not enough');
+    const lower = text.toLowerCase();
+    if (crisisPhrases.some(p => lower.includes(p))) {
+      track('care_screen_shown');   // someone in real distress reached the safety screen
+      showCareScreen();
+      return;
+    }
+    // 1) Load the static pool INSTANTLY so meteors are guaranteed to appear on time.
+    const result = getPool(text);
+    activePool = result.lines;
+    poolQueue = [];
+    sessionCount++;
+    track('thought_released', { category: result.cat, nth: sessionCount }); // category only, never the words
+
+    // 2) In parallel, during the ~4.2s minimize animation, try for better AI lines.
+    //    If they arrive before the meteors start, we quietly swap them in.
+    fetchAI(text).then(ai => {
+      if (ai && ai.length) {
+        activePool = ai;       // upgrade to catered responses
+        poolQueue = [];        // reshuffle from the new set
+        track('ai_used');      // so you can see in analytics how often AI succeeds
+      }
+    });
+
+    thoughtText.textContent = text;
+    thoughtText.style.animation = '';
+    phaseInput.style.display = 'none';
+    phaseThought.style.display = 'flex';
+    if (navigator.vibrate) navigator.vibrate(20);
+    setTimeout(() => { thoughtText.style.animation = 'shrinkFade 2.8s ease-in forwards'; }, 1300);
+    setTimeout(() => { phaseThought.style.display = 'none'; startField(); }, 4200);
+  }
+
+  function showCareScreen() {
+    phaseInput.style.display = 'none';
+    phaseClose.style.display = 'flex';
+    phaseClose.innerHTML = `
+      <div style="color:white; font-size:24px; font-weight:300; opacity:0; animation:emerge 1s 0.2s forwards; margin-bottom:18px; line-height:1.4;">what you're carrying<br>sounds heavy</div>
+      <div style="color:rgba(255,255,255,0.6); font-size:17px; font-style:italic; opacity:0; animation:emerge 1s 1.2s forwards; margin-bottom:14px; line-height:1.5; max-width:300px;">this app isn't enough for this moment, and you deserve more than an app right now.</div>
+      <div style="color:rgba(255,255,255,0.6); font-size:17px; opacity:0; animation:emerge 1s 2.2s forwards; margin-bottom:30px; line-height:1.6; max-width:300px;">please reach out to someone. in the US you can call or text <strong style="color:white;">988</strong> any time — a real person will answer.</div>
+      <button id="care-back" class="cosmic-btn" style="opacity:0; animation:emerge 1s 3.2s forwards;">go back</button>
+    `;
+    document.getElementById('care-back').addEventListener('click', reset);
+  }
+
+  function startField() {
+    field.style.display = 'block';
+    bottomBar.style.display = 'flex';
+    catchHint.style.opacity = '1';
+    setTimeout(() => { catchHint.style.opacity = '0'; }, 4000);
+    running = true;
+    scheduleSpawn(600);
+    tick();
+  }
+
+  function scheduleSpawn(delay) {
+    spawnTimer = setTimeout(() => {
+      if (!running) return;
+      if (activeMeteors.length < 4) spawnMeteor();
+      scheduleSpawn(1400 + Math.random() * 1600);
+    }, delay);
+  }
+
+  function spawnMeteor() {
+    const phrase = nextPhrase();
+    const el = document.createElement('div');
+    el.className = 'meteor-thought';
+    el.textContent = phrase;
+    el.style.fontSize = '19px';
+    el.style.opacity = '0';
+    field.appendChild(el);
+    const trail = document.createElement('div');
+    trail.className = 'meteor-trail';
+    field.appendChild(trail);
+
+    const edge = Math.floor(Math.random() * 4);
+    let sx, sy; const margin = 50;
+    if (edge === 0) { sx = Math.random() * W; sy = -margin; }
+    else if (edge === 1) { sx = W + margin; sy = Math.random() * H * 0.7; }
+    else if (edge === 2) { sx = Math.random() * W; sy = H + margin; }
+    else { sx = -margin; sy = Math.random() * H * 0.7; }
+
+    const tx = CX + (Math.random() - 0.5) * 110;
+    const ty = CY + (Math.random() - 0.5) * 150;
+
+    activeMeteors.push({ el, trail, x: sx, y: sy, sx, sy, tx, ty, t: 0, speed: 1 / (440 + Math.random() * 180), caught: false, dead: false });
+  }
+
+  function tick() {
+    if (!running) return;
+    rafId = requestAnimationFrame(tick);
+    for (let i = activeMeteors.length - 1; i >= 0; i--) {
+      const m = activeMeteors[i];
+      if (m.dead) continue;
+      m.t += m.speed;
+      const p = m.t;
+      const ease = p < 1 ? (p * p * (3 - 2 * p)) : 1;
+      let cx, cy;
+      if (p <= 1) { cx = m.sx + (m.tx - m.sx) * ease; cy = m.sy + (m.ty - m.sy) * ease; }
+      else {
+        const dx = (m.tx - m.sx), dy = (m.ty - m.sy);
+        const len = Math.hypot(dx, dy) || 1; const over = (p - 1) * 130;
+        cx = m.tx + (dx / len) * over; cy = m.ty + (dy / len) * over;
+      }
+      m.x = cx; m.y = cy;
+      const distToCenter = Math.hypot(cx - CX, cy - CY);
+      let bright = Math.max(0, 1 - Math.min(1, distToCenter / 220));
+      let opacity, scale, glow;
+      if (p < 0.12) { opacity = (p / 0.12) * 0.5; scale = 0.5 + bright * 0.6; glow = 0; }
+      else if (p > 1.6) { opacity = Math.max(0, 1 - (p - 1.6) / 0.5); scale = 0.6; glow = 0; }
+      else { opacity = 0.35 + bright * 0.65; scale = 0.65 + bright * 0.6; glow = bright; }
+      m.el.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%) scale(${scale.toFixed(3)})`;
+      m.el.style.opacity = opacity.toFixed(3);
+      const g = (glow * 22).toFixed(1), g2 = (glow * 40).toFixed(1);
+      m.el.style.textShadow = `0 0 ${g}px rgba(255,255,255,${(glow*0.8).toFixed(2)}), 0 0 ${g2}px rgba(180,200,255,${(glow*0.5).toFixed(2)})`;
+      m.el.style.color = `rgba(255,255,255,${(0.55 + glow*0.45).toFixed(2)})`;
+      m.el.dataset.bright = bright.toFixed(2);
+      const ang = Math.atan2(cy - m.sy, cx - m.sx) * 180 / Math.PI;
+      const trailLen = 30 + bright * 40;
+      m.trail.style.left = cx + 'px'; m.trail.style.top = cy + 'px';
+      m.trail.style.width = trailLen + 'px';
+      m.trail.style.transform = `translate(-100%, -50%) rotate(${ang}deg)`;
+      m.trail.style.opacity = (opacity * 0.5).toFixed(2);
+      if (p > 2.2) removeMeteor(m, i);
+    }
+  }
+
+  function removeMeteor(m, idx) {
+    m.dead = true;
+    if (m.el.parentNode) m.el.remove();
+    if (m.trail.parentNode) m.trail.remove();
+    activeMeteors.splice(idx, 1);
+  }
+
+  function catchMeteor(m) {
+    if (m.caught || m.dead) return;
+    m.caught = true; m.dead = true;
+    if (navigator.vibrate) navigator.vibrate(15);
+    const ripple = document.createElement('div');
+    ripple.style.cssText = `position:absolute; left:${m.x}px; top:${m.y}px; width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,0.6); pointer-events:none; animation: ripple 0.9s ease-out forwards;`;
+    field.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 900);
+    m.el.style.animation = 'dissolve 1s ease-out forwards';
+    if (m.trail.parentNode) m.trail.remove();
+    setTimeout(() => { if (m.el.parentNode) m.el.remove(); }, 1000);
+    const idx = activeMeteors.indexOf(m);
+    if (idx > -1) activeMeteors.splice(idx, 1);
+    caught++; caughtCountEl.textContent = caught;
+    cosmos.style.transition = 'background 0.15s';
+    cosmos.style.background = 'radial-gradient(ellipse at 50% 40%, #1a1f4a 0%, #080c20 70%)';
+    setTimeout(() => {
+      cosmos.style.transition = 'background 0.7s';
+      cosmos.style.background = 'radial-gradient(ellipse at 50% 40%, #0d1030 0%, #050816 70%)';
+    }, 150);
+  }
+
+  function handleTap(px, py) {
+    let best = null, bestBright = -1;
+    for (const m of activeMeteors) {
+      if (m.caught || m.dead) continue;
+      const d = Math.hypot(m.x - px, m.y - py);
+      const bright = parseFloat(m.el.dataset.bright || '0');
+      const radius = 65 + bright * 35;
+      if (d < radius && bright > bestBright) { best = m; bestBright = bright; }
+    }
+    if (best) catchMeteor(best);
+  }
+
+  field.addEventListener('click', (e) => handleTap(e.clientX, e.clientY));
+  field.addEventListener('touchstart', (e) => { const t = e.touches[0]; handleTap(t.clientX, t.clientY); }, { passive: true });
+
+  function finish() {
+    running = false;
+    if (spawnTimer) clearTimeout(spawnTimer);
+    if (rafId) cancelAnimationFrame(rafId);
+    track('session_completed', { caught: caught });
+    activeMeteors.forEach(m => { if (m.el.parentNode) m.el.remove(); if (m.trail.parentNode) m.trail.remove(); });
+    activeMeteors = [];
+    field.style.display = 'none';
+    bottomBar.style.display = 'none';
+    phaseClose.style.display = 'flex';
+    const word = caught === 0 ? 'you witnessed the sky' : (caught === 1 ? '1 truth taken in' : caught + ' truths taken in');
+    phaseClose.innerHTML = `
+      <div style="color:rgba(255,255,255,0.5); font-size:15px; font-style:italic; letter-spacing:2px; opacity:0; animation:emerge 1s 0.2s forwards; margin-bottom:14px;">the heavy thought is gone</div>
+      <div style="color:white; font-size:30px; font-weight:300; opacity:0; animation:emerge 1s 1s forwards; margin-bottom:6px;">${word}</div>
+      <div style="color:rgba(255,255,255,0.55); font-size:20px; font-style:italic; opacity:0; animation:emerge 1s 2s forwards; margin-bottom:38px;">come back to the present</div>
+      <button id="again-btn" class="cosmic-btn" style="opacity:0; animation:emerge 1s 3s forwards;">release another</button>
+    `;
+    document.getElementById('again-btn').addEventListener('click', reset);
+  }
+
+  function reset() {
+    caught = 0; caughtCountEl.textContent = '0';
+    phaseClose.style.display = 'none';
+    phaseInput.style.display = 'flex';
+    input.value = ''; thoughtText.style.animation = '';
+  }
+
+  releaseBtn.addEventListener('click', release);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); release(); } });
+  document.getElementById('done-btn').addEventListener('click', finish);
+})();
+</script>
+</body>
+</html>
