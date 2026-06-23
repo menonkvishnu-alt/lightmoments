@@ -32,6 +32,7 @@
   @keyframes twinkle { 0%, 100% { opacity: 0.12; } 50% { opacity: 0.9; } }
   @keyframes shrinkFade { 0% { transform: scale(1); opacity: 1; filter: blur(0); } 60% { transform: scale(0.3); opacity: 0.5; filter: blur(2px); } 100% { transform: scale(0.02); opacity: 0; filter: blur(4px); } }
   @keyframes dissolve { 0% { opacity: 1; transform: scale(1); filter: blur(0); letter-spacing: 0; } 100% { opacity: 0; transform: scale(1.4); filter: blur(8px); letter-spacing: 6px; } }
+  @keyframes dissolveInPlace { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); letter-spacing: 0; } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); filter: blur(8px); letter-spacing: 6px; } }
   @keyframes ripple { 0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0.8; } 100% { transform: translate(-50%, -50%) scale(3.5); opacity: 0; } }
   @keyframes emerge { 0% { opacity: 0; transform: translateY(12px); } 100% { opacity: 1; transform: translateY(0); } }
 
@@ -72,12 +73,13 @@
 <body>
 <div id="cosmos">
   <div id="stars"></div>
+  <div id="flash" style="position:absolute; inset:0; background:radial-gradient(ellipse at 50% 45%, rgba(120,140,255,0.45) 0%, rgba(120,140,255,0) 60%); opacity:0; pointer-events:none; z-index:2;"></div>
   <div class="header-label">moment of light</div>
 
   <!-- INPUT -->
   <div id="phase-input" class="phase">
     <div style="color: rgba(255,255,255,0.4); font-size: 12px; text-align: center; margin-bottom: 28px; letter-spacing: 3px; text-transform: uppercase;">speak what's heavy</div>
-    <input id="thought-input" class="cosmic-input" type="text" maxlength="50" placeholder="type your negative thought here" autocomplete="off" autocapitalize="off" autocorrect="off" />
+    <input id="thought-input" class="cosmic-input" type="text" maxlength="50" placeholder="I am not..." autocomplete="off" autocapitalize="off" autocorrect="off" />
     <button id="release-btn" class="cosmic-btn" style="margin-top: 38px;">release</button>
     <div style="position: absolute; bottom: 90px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0.25); font-size: 12px; font-style: italic; padding: 0 30px; line-height: 1.6;">try "I am stupid" or "I'm afraid of failing"</div>
   </div>
@@ -109,6 +111,7 @@
 (function() {
   const cosmos = document.getElementById('cosmos');
   const stars = document.getElementById('stars');
+  const flash = document.getElementById('flash');
   const input = document.getElementById('thought-input');
   const releaseBtn = document.getElementById('release-btn');
   const phaseInput = document.getElementById('phase-input');
@@ -438,7 +441,7 @@
     const tx = CX + (Math.random() - 0.5) * 110;
     const ty = CY + (Math.random() - 0.5) * 150;
 
-    activeMeteors.push({ el, trail, x: sx, y: sy, sx, sy, tx, ty, t: 0, speed: 1 / (440 + Math.random() * 180), caught: false, dead: false });
+    activeMeteors.push({ el, trail, x: sx, y: sy, sx, sy, tx, ty, t: 0, speed: 1 / (720 + Math.random() * 240), caught: false, dead: false });
   }
 
   function tick() {
@@ -490,23 +493,31 @@
   function catchMeteor(m) {
     if (m.caught || m.dead) return;
     m.caught = true; m.dead = true;
-    if (navigator.vibrate) navigator.vibrate(15);
+    if (navigator.vibrate) navigator.vibrate(12);
     const ripple = document.createElement('div');
     ripple.style.cssText = `position:absolute; left:${m.x}px; top:${m.y}px; width:40px; height:40px; border-radius:50%; border:1px solid rgba(255,255,255,0.6); pointer-events:none; animation: ripple 0.9s ease-out forwards;`;
     field.appendChild(ripple);
     setTimeout(() => ripple.remove(), 900);
-    m.el.style.animation = 'dissolve 1s ease-out forwards';
+    // Pin the element at its CURRENT spot using left/top + centering transform,
+    // so the dissolve animation (transform: scale) no longer collides with the
+    // movement transform and snaps it back to the origin.
+    m.el.style.left = m.x + 'px';
+    m.el.style.top = m.y + 'px';
+    m.el.style.transform = 'translate(-50%, -50%)';
+    void m.el.offsetWidth; // apply base position before animating
+    m.el.style.animation = 'dissolveInPlace 1s ease-out forwards';
     if (m.trail.parentNode) m.trail.remove();
     setTimeout(() => { if (m.el.parentNode) m.el.remove(); }, 1000);
     const idx = activeMeteors.indexOf(m);
     if (idx > -1) activeMeteors.splice(idx, 1);
     caught++; caughtCountEl.textContent = caught;
-    cosmos.style.transition = 'background 0.15s';
-    cosmos.style.background = 'radial-gradient(ellipse at 50% 40%, #1a1f4a 0%, #080c20 70%)';
-    setTimeout(() => {
-      cosmos.style.transition = 'background 0.7s';
-      cosmos.style.background = 'radial-gradient(ellipse at 50% 40%, #0d1030 0%, #050816 70%)';
-    }, 150);
+    // lightweight GPU flash (opacity only) instead of re-painting the whole gradient
+    flash.style.transition = 'none';
+    flash.style.opacity = '0.5';
+    requestAnimationFrame(() => {
+      flash.style.transition = 'opacity 0.6s ease-out';
+      flash.style.opacity = '0';
+    });
   }
 
   function handleTap(px, py) {
