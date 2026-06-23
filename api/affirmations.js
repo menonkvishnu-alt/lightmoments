@@ -60,7 +60,7 @@ export default async function handler(req, res) {
 VOICE: grounded, a little warrior-like and divine, never cheesy or clinical. Think "a god would never kneel," "I have faced tougher things," "smile, this adversity is chiseling the statue." Calm strength, not hype.
 RULES:
 - Return EXACTLY 6 affirmations.
-- Each is a first-person "I" statement, under 9 words, no period needed.
+- Each is a first-person "I" statement, SHORT — 7 words max, ideally 3-6. No period needed.
 - They should directly answer THIS person's specific thought, escalating from a gentle counter to quiet power, ending near pure being (e.g. "I am").
 - No emojis, no quotes, no numbering, no preamble.
 - If the thought signals self-hatred, be gentler and warmer first.
